@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pedidos | Star Imports</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+  <header class="topbar"><a class="brand" href="/" aria-label="Star Imports, início"><span aria-hidden="true">★</span> Star Imports</a><span class="tag">Gestão de pedidos</span></header>
+  <main id="conteudo" class="page">
+    <section class="intro" aria-labelledby="titulo">
+      <p class="eyebrow">Operação de estoque</p>
+      <h1 id="titulo">Consulta de pedidos</h1>
+      <p>Confira os itens separados e cancele antes da coleta quando necessário.</p>
+      <form class="search" method="get" action="/">
+        <label for="code">Código do pedido</label>
+        <div class="search-row"><input id="code" name="code" value="{{ query }}" placeholder="Ex.: DS-1042" autocomplete="off" required><button type="submit">Consultar</button></div>
+        <small>Exemplo disponível: DS-1042</small>
+      </form>
+    </section>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}<div class="messages" role="status" aria-live="polite">{% for category, message in messages %}<p class="message {{ category }}">{{ message }}</p>{% endfor %}</div>{% endif %}
+    {% endwith %}
+    {% if order %}
+    <section class="order-card" aria-labelledby="pedido-titulo">
+      <div class="order-head"><div><p class="eyebrow">Pedido consultado</p><h2 id="pedido-titulo">{{ order.code }}</h2></div><span class="status {{ order.status }}"><span class="status-dot" aria-hidden="true"></span>Status: {{ {'separando':'Em separação','coletado':'Coletado','cancelado':'Cancelado'}[order.status] }}</span></div>
+      <div class="table-wrap"><table><caption>Itens do pedido e saldo atual em estoque</caption><thead><tr><th scope="col">Produto</th><th scope="col">SKU</th><th scope="col">Qtd.</th><th scope="col">Saldo</th><th scope="col">Ação</th></tr></thead><tbody>
+      {% for item in order['items'] %}<tr><td>{{ item.name }}{% if item.cancelled %}<span class="cancelled-label">Cancelado</span>{% endif %}</td><td>{{ item.sku }}</td><td>{{ item.quantity }}</td><td>{{ item.stock }}</td><td>{% if not item.cancelled and order.status == 'separando' %}<form method="post" action="{{ url_for('cancel_item', code=order.code, item_id=item.id) }}"><button class="secondary" type="submit" aria-label="Cancelar {{ item.name }} do pedido {{ order.code }}">Cancelar item</button></form>{% else %}<span class="muted">—</span>{% endif %}</td></tr>{% endfor %}
+      </tbody></table></div>
+      <p class="note"><strong>Regra:</strong> o cancelamento só está disponível antes da coleta. A reposição do saldo é aplicada uma única vez.</p>
+    </section>
+    {% else %}
+    <aside class="empty"><span class="empty-icon" aria-hidden="true">⌕</span><div><h2>Encontre um pedido</h2><p>Digite um código acima para consultar itens, status e saldo.</p></div></aside>
+    {% endif %}
+    <footer><span>Star Imports · MVP demonstrativo</span><span>Dados fictícios para demonstração</span></footer>
+  </main>
+</body>
+</html>
